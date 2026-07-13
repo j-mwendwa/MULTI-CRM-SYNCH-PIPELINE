@@ -16,7 +16,7 @@ def _count_tokens(text: str) -> int:
 
 def _extract_text(content: Any) -> str:
     if hasattr(content, "text"):
-        return content.text
+        return str(content.text)
     if isinstance(content, dict):
         return str(content.get("text", ""))
     return str(content)

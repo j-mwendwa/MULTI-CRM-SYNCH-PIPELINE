@@ -28,7 +28,7 @@ async def score_and_enrich(state: PipelineState) -> dict[str, object]:
 
     llm_enrichment: dict[str, object] = {}
     if settings.llm_enrichment_enabled and settings.anthropic_api_key:
-        existing = {
+        existing: dict[str, str] = {
             "email": lead.email,
             "first_name": lead.first_name,
             "last_name": lead.last_name,
@@ -47,7 +47,7 @@ async def score_and_enrich(state: PipelineState) -> dict[str, object]:
     notes = str(llm_enrichment.get("notes", ""))
 
     if llm_score is not None:
-        score = float(llm_score)
+        score = float(str(llm_score))
     else:
         score = 0.8 if lead.email and lead.company else 0.3
 
@@ -118,8 +118,10 @@ async def push_hubspot(state: PipelineState) -> dict[str, object]:
     attempt = retry_attempts.get("hubspot", 0) + 1
     provider = "hubspot"
 
+    payload = state["hubspot_payload"]
+    assert payload is not None
     try:
-        result = await push_to_hubspot(state["hubspot_payload"])
+        result = await push_to_hubspot(payload)
         result.attempt = attempt
         logger.info("hubspot_success", remote_id=result.remote_id, attempt=attempt)
         return {"results": [result], "retry_attempts": {"hubspot": attempt}}
@@ -138,8 +140,10 @@ async def push_salesforce(state: PipelineState) -> dict[str, object]:
     attempt = retry_attempts.get("salesforce", 0) + 1
     provider = "salesforce"
 
+    payload = state["salesforce_payload"]
+    assert payload is not None
     try:
-        result = await push_to_salesforce(state["salesforce_payload"])
+        result = await push_to_salesforce(payload)
         result.attempt = attempt
         logger.info("salesforce_success", remote_id=result.remote_id, attempt=attempt)
         return {"results": [result], "retry_attempts": {"salesforce": attempt}}
@@ -158,8 +162,10 @@ async def push_odoo(state: PipelineState) -> dict[str, object]:
     attempt = retry_attempts.get("odoo", 0) + 1
     provider = "odoo"
 
+    payload = state["odoo_payload"]
+    assert payload is not None
     try:
-        result = await push_to_odoo(state["odoo_payload"])
+        result = await push_to_odoo(payload)
         result.attempt = attempt
         logger.info("odoo_success", remote_id=result.remote_id, attempt=attempt)
         return {"results": [result], "retry_attempts": {"odoo": attempt}}

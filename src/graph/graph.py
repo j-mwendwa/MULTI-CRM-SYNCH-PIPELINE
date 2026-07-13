@@ -19,7 +19,7 @@ from src.graph.state import PipelineState
 logger = structlog.get_logger(__name__)
 
 
-def build_graph() -> StateGraph[PipelineState]:
+def build_graph() -> StateGraph:  # type: ignore[return-value]
     workflow = StateGraph(PipelineState)
 
     workflow.add_node("score_and_enrich", score_and_enrich)
@@ -60,7 +60,7 @@ def build_graph() -> StateGraph[PipelineState]:
 
 
 async def run_pipeline(lead: LeadInbound) -> LeadResponse:
-    app = build_graph().compile()
+    app = build_graph()
     initial: PipelineState = {
         "lead": lead,
         "enriched_lead": None,
