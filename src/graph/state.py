@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any
+from typing import Annotated, Any, TypedDict
 
 from src.api.schemas import (
     ApiResult,
@@ -19,15 +19,15 @@ def _merge_dicts(a: dict[str, int], b: dict[str, int]) -> dict[str, int]:
     return merged
 
 
-class PipelineState(dict[str, Any]):
-    lead: LeadInbound | None = None
-    enriched_lead: EnrichedLead | None = None
-    hubspot_payload: HubSpotPayload | None = None
-    salesforce_payload: SalesforcePayload | None = None
-    odoo_payload: OdooPayload | None = None
-    results: Annotated[list[ApiResult], operator.add] = []
-    errors: Annotated[list[dict], operator.add] = []
-    retry_attempts: Annotated[dict[str, int], _merge_dicts] = {}
-    max_retries: int = 5
-    base_delay: float = 1.0
-    failed_providers: Annotated[list[str], operator.add] = []
+class PipelineState(TypedDict):
+    lead: LeadInbound | None
+    enriched_lead: EnrichedLead | None
+    hubspot_payload: HubSpotPayload | None
+    salesforce_payload: SalesforcePayload | None
+    odoo_payload: OdooPayload | None
+    results: Annotated[list[ApiResult], operator.add]
+    errors: Annotated[list[dict[str, Any]], operator.add]
+    retry_attempts: Annotated[dict[str, int], _merge_dicts]
+    max_retries: int
+    base_delay: float
+    failed_providers: Annotated[list[str], operator.add]

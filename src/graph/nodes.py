@@ -22,10 +22,11 @@ from src.llm.client import analyze_error, enrich_lead
 logger = structlog.get_logger(__name__)
 
 
-async def score_and_enrich(state: PipelineState) -> dict:
+async def score_and_enrich(state: PipelineState) -> dict[str, object]:
     lead = state["lead"]
+    assert lead is not None
 
-    llm_enrichment = {}
+    llm_enrichment: dict[str, object] = {}
     if settings.llm_enrichment_enabled and settings.anthropic_api_key:
         existing = {
             "email": lead.email,
@@ -37,13 +38,13 @@ async def score_and_enrich(state: PipelineState) -> dict:
         }
         llm_enrichment = await enrich_lead(lead.raw_payload, existing)
 
-    first_name = llm_enrichment.get("first_name") or lead.first_name
-    last_name = llm_enrichment.get("last_name") or lead.last_name
-    company = llm_enrichment.get("company") or lead.company or "Unknown"
-    role = llm_enrichment.get("role") or lead.role
-    phone = llm_enrichment.get("phone") or lead.phone
+    first_name = str(llm_enrichment.get("first_name") or lead.first_name)
+    last_name = str(llm_enrichment.get("last_name") or lead.last_name)
+    company = str(llm_enrichment.get("company") or lead.company or "Unknown")
+    role = str(llm_enrichment.get("role") or lead.role or "")
+    phone = str(llm_enrichment.get("phone") or lead.phone or "")
     llm_score = llm_enrichment.get("confidence_score")
-    notes = llm_enrichment.get("notes", "")
+    notes = str(llm_enrichment.get("notes", ""))
 
     if llm_score is not None:
         score = float(llm_score)
@@ -56,8 +57,8 @@ async def score_and_enrich(state: PipelineState) -> dict:
         first_name=first_name,
         last_name=last_name,
         company=company,
-        role=role or "",
-        phone=phone or "",
+        role=role,
+        phone=phone,
         confidence_score=score,
         enrichment_notes=notes,
         source=lead.source,
@@ -71,8 +72,9 @@ async def score_and_enrich(state: PipelineState) -> dict:
     return {"enriched_lead": enriched}
 
 
-async def format_payloads(state: PipelineState) -> dict:
+async def format_payloads(state: PipelineState) -> dict[str, object]:
     lead = state["enriched_lead"]
+    assert lead is not None
     hubspot = HubSpotPayload(
         properties={
             "email": lead.email,
@@ -107,11 +109,11 @@ async def format_payloads(state: PipelineState) -> dict:
     }
 
 
-async def retry_dispatcher(state: PipelineState) -> dict:
+async def retry_dispatcher(state: PipelineState) -> dict[str, object]:
     return {}
 
 
-async def push_hubspot(state: PipelineState) -> dict:
+async def push_hubspot(state: PipelineState) -> dict[str, object]:
     retry_attempts = state.get("retry_attempts", {})
     attempt = retry_attempts.get("hubspot", 0) + 1
     provider = "hubspot"
@@ -123,7 +125,7 @@ async def push_hubspot(state: PipelineState) -> dict:
         return {"results": [result], "retry_attempts": {"hubspot": attempt}}
     except (ApiError, RateLimitError) as exc:
         logger.warning("hubspot_failed", error=str(exc), attempt=attempt)
-        err = {"provider": provider, "error": str(exc), "attempt": attempt}
+        err: dict[str, object] = {"provider": provider, "error": str(exc), "attempt": attempt}
         return {
             "errors": [err],
             "retry_attempts": {"hubspot": attempt},
@@ -131,7 +133,7 @@ async def push_hubspot(state: PipelineState) -> dict:
         }
 
 
-async def push_salesforce(state: PipelineState) -> dict:
+async def push_salesforce(state: PipelineState) -> dict[str, object]:
     retry_attempts = state.get("retry_attempts", {})
     attempt = retry_attempts.get("salesforce", 0) + 1
     provider = "salesforce"
@@ -143,7 +145,7 @@ async def push_salesforce(state: PipelineState) -> dict:
         return {"results": [result], "retry_attempts": {"salesforce": attempt}}
     except (ApiError, RateLimitError) as exc:
         logger.warning("salesforce_failed", error=str(exc), attempt=attempt)
-        err = {"provider": provider, "error": str(exc), "attempt": attempt}
+        err: dict[str, object] = {"provider": provider, "error": str(exc), "attempt": attempt}
         return {
             "errors": [err],
             "retry_attempts": {"salesforce": attempt},
@@ -151,7 +153,7 @@ async def push_salesforce(state: PipelineState) -> dict:
         }
 
 
-async def push_odoo(state: PipelineState) -> dict:
+async def push_odoo(state: PipelineState) -> dict[str, object]:
     retry_attempts = state.get("retry_attempts", {})
     attempt = retry_attempts.get("odoo", 0) + 1
     provider = "odoo"
@@ -163,7 +165,7 @@ async def push_odoo(state: PipelineState) -> dict:
         return {"results": [result], "retry_attempts": {"odoo": attempt}}
     except (ApiError, RateLimitError) as exc:
         logger.warning("odoo_failed", error=str(exc), attempt=attempt)
-        err = {"provider": provider, "error": str(exc), "attempt": attempt}
+        err: dict[str, object] = {"provider": provider, "error": str(exc), "attempt": attempt}
         return {
             "errors": [err],
             "retry_attempts": {"odoo": attempt},
@@ -171,12 +173,12 @@ async def push_odoo(state: PipelineState) -> dict:
         }
 
 
-async def evaluate_errors(state: PipelineState) -> dict:
+async def evaluate_errors(state: PipelineState) -> dict[str, object]:
     failed = list(set(state.get("failed_providers", [])))
     retry_attempts = state.get("retry_attempts", {})
     max_retries = settings.max_retry_attempts
 
-    remaining = []
+    remaining: list[str] = []
     for provider in failed:
         attempt = retry_attempts.get(provider, 0)
         if attempt >= max_retries:
@@ -186,7 +188,7 @@ async def evaluate_errors(state: PipelineState) -> dict:
         should_retry = True
         if settings.llm_error_analysis_enabled and settings.anthropic_api_key:
             error_text = _find_error(state, provider)
-            if error_text:
+            if error_text is not None:
                 should_retry = await analyze_error(provider, error_text, attempt)
 
         if should_retry:
@@ -209,5 +211,7 @@ async def evaluate_errors(state: PipelineState) -> dict:
 def _find_error(state: PipelineState, provider: str) -> str | None:
     for err in state.get("errors", []):
         if err.get("provider") == provider:
-            return err.get("error")
+            error_val = err.get("error")
+            if isinstance(error_val, str):
+                return error_val
     return None

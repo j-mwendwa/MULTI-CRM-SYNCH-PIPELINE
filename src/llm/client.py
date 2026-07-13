@@ -14,6 +14,14 @@ def _count_tokens(text: str) -> int:
     return len(text) // 4
 
 
+def _extract_text(content: Any) -> str:
+    if hasattr(content, "text"):
+        return content.text
+    if isinstance(content, dict):
+        return str(content.get("text", ""))
+    return str(content)
+
+
 async def enrich_lead(raw_payload: dict[str, Any], existing: dict[str, str]) -> dict[str, Any]:
     from anthropic import AsyncAnthropic
 
@@ -43,7 +51,8 @@ async def enrich_lead(raw_payload: dict[str, Any], existing: dict[str, str]) -> 
             messages=[{"role": "user", "content": user_msg}],
         )
         latency_ms = int((time.monotonic() - start) * 1000)
-        output_tokens = _count_tokens(resp.content[0].text)
+        raw_text = _extract_text(resp.content[0])
+        output_tokens = _count_tokens(raw_text)
         logger.info(
             "llm_enrich",
             input_tokens=input_tokens,
@@ -53,7 +62,7 @@ async def enrich_lead(raw_payload: dict[str, Any], existing: dict[str, str]) -> 
         )
         import json
 
-        parsed = json.loads(resp.content[0].text)
+        parsed: dict[str, Any] = json.loads(raw_text)
         return parsed
     except Exception as exc:
         logger.warning("llm_enrich_failed", error=str(exc), fallback="heuristic")
@@ -84,11 +93,12 @@ async def analyze_error(provider: str, error: str, attempt: int) -> bool:
         )
         import json
 
-        result = json.loads(resp.content[0].text)
+        raw_text = _extract_text(resp.content[0])
+        result: dict[str, Any] = json.loads(raw_text)
         return bool(result.get("should_retry", False))
     except Exception:
         status_code = _extract_status_code(error)
-        if status_code:
+        if status_code is not None:
             return status_code in (429, 503, 502, 504) or status_code >= 500
         timeout_keywords = ("timeout", "timed out", "network", "connection")
         return any(kw in error.lower() for kw in timeout_keywords)

@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 
 async def _get_salesforce_token() -> str:
     url = f"{settings.salesforce_base_url}/services/oauth2/token"
-    data = {
+    data: dict[str, str] = {
         "grant_type": "password",
         "client_id": settings.salesforce_client_id,
         "client_secret": settings.salesforce_client_secret,
@@ -22,7 +22,8 @@ async def _get_salesforce_token() -> str:
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(url, data=data)
         resp.raise_for_status()
-        return resp.json()["access_token"]
+        token: str = resp.json()["access_token"]
+        return token
 
 
 async def push_to_salesforce(payload: SalesforcePayload) -> ApiResult:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic_settings import BaseSettings
@@ -36,7 +37,7 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
-def _load_config_yaml() -> dict:
+def _load_config_yaml() -> dict[str, Any]:
     path = Path(__file__).resolve().parent.parent / "configs" / "config.yaml"
     if path.exists():
         with open(path) as f:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import httpx
 import structlog
 
@@ -10,7 +12,7 @@ from src.core.exceptions import ApiError, RateLimitError
 logger = structlog.get_logger(__name__)
 
 
-def _prepare_xmlrpc_payload(payload: OdooPayload) -> dict:
+def _prepare_xmlrpc_payload(payload: OdooPayload) -> dict[str, Any]:
     return {
         "jsonrpc": "2.0",
         "method": "call",
@@ -42,7 +44,7 @@ def _prepare_xmlrpc_payload(payload: OdooPayload) -> dict:
 
 async def _odoo_authenticate() -> tuple[int, str]:
     url = f"{settings.odoo_base_url}/jsonrpc"
-    payload = {
+    payload: dict[str, Any] = {
         "jsonrpc": "2.0",
         "method": "call",
         "params": {
@@ -61,7 +63,7 @@ async def _odoo_authenticate() -> tuple[int, str]:
             resp = await client.post(url, json=payload)
         except Exception as exc:
             raise ApiError("odoo", 0, f"Auth connection failed: {exc}")
-        data = resp.json()
+        data: dict[str, Any] = resp.json()
         uid = data.get("result")
         if not uid or not isinstance(uid, int):
             raise ApiError("odoo", resp.status_code, f"Auth failed: {data}")
@@ -78,12 +80,13 @@ async def push_to_odoo(payload: OdooPayload) -> ApiResult:
         try:
             body = _prepare_xmlrpc_payload(p)
             resp = await client.post(url, json=body, headers=headers)
-            result = resp.json()
+            result: dict[str, Any] = resp.json()
 
             err = result.get("error")
-            if err:
-                code = err.get("code", 0)
-                msg = err.get("message", str(err))
+            if err is not None:
+                err_dict = err if isinstance(err, dict) else {}
+                code = int(err_dict.get("code", 0))
+                msg = str(err_dict.get("message", str(err)))
                 if code == 429:
                     raise RateLimitError("odoo", 429, msg)
                 raise ApiError("odoo", code, msg)
