@@ -1,0 +1,24 @@
+retry:
+  max_attempts: 5
+  base_delay_seconds: 1.0
+  backoff_base: 2
+
+rate_limiting:
+  hubspot: 100
+  salesforce: 100
+  odoo: 60
+
+lead_scoring:
+  min_confidence: 0.0
+  enrichment_fields:
+    - company
+    - role
+    - phone
+
+llm:
+  model: claude-sonnet-4-20250514
+  enrichment_enabled: true
+  error_analysis_enabled: true
+  prompts:
+    enrich: prompts/enrich_lead_v1.md
+    error_analysis: prompts/analyze_error_v1.md
