@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -28,7 +28,7 @@ class EnrichedLead(BaseModel):
     confidence_score: float = 0.0
     enrichment_notes: str = ""
     source: str
-    ingested_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    ingested_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class HubSpotPayload(BaseModel):
