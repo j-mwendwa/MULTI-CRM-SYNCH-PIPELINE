@@ -30,11 +30,11 @@ async def score_and_enrich(state: PipelineState) -> dict[str, object]:
     if settings.llm_enrichment_enabled and settings.anthropic_api_key:
         existing: dict[str, str] = {
             "email": lead.email,
-            "first_name": lead.first_name,
-            "last_name": lead.last_name,
-            "company": lead.company,
-            "role": lead.role,
-            "phone": lead.phone,
+            "first_name": str(lead.first_name or ""),
+            "last_name": str(lead.last_name or ""),
+            "company": str(lead.company or ""),
+            "role": str(lead.role or ""),
+            "phone": str(lead.phone or ""),
         }
         llm_enrichment = await enrich_lead(lead.raw_payload, existing)
 
