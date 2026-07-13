@@ -8,17 +8,16 @@ import structlog
 from src.api.schemas import (
     EnrichedLead,
     HubSpotPayload,
-    SalesforcePayload,
     OdooPayload,
-    ApiResult,
+    SalesforcePayload,
 )
 from src.clients.hubspot import push_to_hubspot
-from src.clients.salesforce import push_to_salesforce
 from src.clients.odoo import push_to_odoo
+from src.clients.salesforce import push_to_salesforce
 from src.config import settings
 from src.core.exceptions import ApiError, RateLimitError
 from src.graph.state import PipelineState
-from src.llm.client import enrich_lead, analyze_error
+from src.llm.client import analyze_error, enrich_lead
 
 logger = structlog.get_logger(__name__)
 

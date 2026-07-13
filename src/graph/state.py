@@ -4,12 +4,12 @@ import operator
 from typing import Annotated, Any
 
 from src.api.schemas import (
-    LeadInbound,
+    ApiResult,
     EnrichedLead,
     HubSpotPayload,
-    SalesforcePayload,
+    LeadInbound,
     OdooPayload,
-    ApiResult,
+    SalesforcePayload,
 )
 
 

@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import structlog
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
 
 from src.api.schemas import LeadInbound, LeadResponse
-from src.graph.state import PipelineState
-from src.graph.nodes import (
-    score_and_enrich,
-    format_payloads,
-    retry_dispatcher,
-    push_hubspot,
-    push_salesforce,
-    push_odoo,
-    evaluate_errors,
-)
 from src.graph.edges import route_api_call
+from src.graph.nodes import (
+    evaluate_errors,
+    format_payloads,
+    push_hubspot,
+    push_odoo,
+    push_salesforce,
+    retry_dispatcher,
+    score_and_enrich,
+)
+from src.graph.state import PipelineState
 
 logger = structlog.get_logger(__name__)
 

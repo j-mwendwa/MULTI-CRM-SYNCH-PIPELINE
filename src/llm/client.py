@@ -19,7 +19,8 @@ async def enrich_lead(raw_payload: dict[str, Any], existing: dict[str, str]) -> 
 
     client = AsyncAnthropic(api_key=settings.anthropic_api_key)
     system = (
-        "You are a lead enrichment assistant. Extract structured information from the raw lead payload.\n"
+        "You are a lead enrichment assistant. "
+        "Extract structured information from the raw lead payload.\n"
         "Return ONLY valid JSON with these fields:\n"
         "  - company: company name (or null if unclear)\n"
         "  - role: job title / role (or null)\n"
@@ -66,9 +67,11 @@ async def analyze_error(provider: str, error: str, attempt: int) -> bool:
     system = (
         "You are an error analysis assistant for a CRM sync pipeline.\n"
         "Given an API error, determine if retrying is likely to succeed.\n"
-        "Return ONLY valid JSON: {\"should_retry\": true/false, \"reason\": \"...\"}\n"
-        "Retry is appropriate for: 429 (rate limit), 503 (unavailable), timeout, network errors.\n"
-        "Retry is NOT appropriate for: 400 (bad request), 401/403 (auth), 404 (not found), validation errors."
+        'Return ONLY valid JSON: {"should_retry": true/false, "reason": "..."}\n'
+        "Retry is appropriate for: 429 (rate limit), 503 (unavailable),"
+        " timeout, network errors.\n"
+        "Retry is NOT appropriate for: 400 (bad request), 401/403 (auth),"
+        " 404 (not found), validation errors."
     )
     user_msg = f"Provider: {provider}\nAttempt: {attempt}\nError: {error}"
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import structlog
 import httpx
+import structlog
 
-from src.api.schemas import SalesforcePayload, ApiResult
+from src.api.schemas import ApiResult, SalesforcePayload
 from src.config import settings
 from src.core.exceptions import ApiError, RateLimitError
 
@@ -39,7 +39,8 @@ async def push_to_salesforce(payload: SalesforcePayload) -> ApiResult:
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
-            resp = await client.post(url, json=payload.model_dump(exclude_none=True), headers=headers)
+            body = payload.model_dump(exclude_none=True)
+            resp = await client.post(url, json=body, headers=headers)
             if resp.status_code == 429:
                 raise RateLimitError("salesforce", 429, resp.text)
             if resp.status_code >= 400:

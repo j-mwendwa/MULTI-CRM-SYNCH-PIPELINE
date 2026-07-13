@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import structlog
 import httpx
+import structlog
 
-from src.api.schemas import OdooPayload, ApiResult
+from src.api.schemas import ApiResult, OdooPayload
 from src.config import settings
 from src.core.exceptions import ApiError, RateLimitError
 
